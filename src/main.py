@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.DEBUG)
+    level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -68,13 +68,16 @@ class GeneticAlgorithm:
         Calculate fitness
         '''
 
-        total_distance = 0
-        for i, element in enumerate(individual):
-            current_city = element
-            next_city = individual[(i + 1) % len(individual)]
-            distance = current_city.distance_to(next_city)
-            total_distance += distance
-        return 1 / total_distance
+        try:
+            total_distance = 0
+            for i, element in enumerate(individual):
+                current_city = element
+                next_city = individual[(i + 1) % len(individual)]
+                distance = current_city.distance_to(next_city)
+                total_distance += distance
+            return 1 / total_distance
+        except ZeroDivisionError:
+            self.print_list(text='ERROR!', parents=individual)
 
     def selection(self):
         '''
@@ -82,10 +85,35 @@ class GeneticAlgorithm:
         '''
 
         logger.info('Starting selection phase')
-        sample = random.choices(self.population,
-                                  weights=[self.fitness_function(individual)
-                                           for individual in self.population],
-                                  k=2)
+
+        # Calculate the weights for each individual in the population
+        weights = []
+        for individual in self.population:
+            weights.append(self.fitness_function(individual))
+        weights = [self.fitness_function(individual)
+                   for individual in self.population]
+
+        logger.info('Weights = %s', weights)
+        logger.info('Weights length = %s', len(weights))
+
+        population = self.population[:]
+        sample = []
+        for _ in range(2):
+            while True:
+                selected = random.choices(population,
+                                        weights=weights)[0]
+                self.print_list(text='Selected: ', parents=selected)
+                if len(set(selected)) != len(self.cities):
+                    self.print_list(text='Detected duplicated city: ',
+                                    parents=selected)
+                    continue
+                sample.append(selected)
+                index = population.index(selected)
+                population.pop(index)
+                weights.pop(index)
+                break
+
+
         self.print_list(text='Parent1: ',
                         parents=sample[0])
         self.print_list(text='Parent2: ',
@@ -112,7 +140,7 @@ class GeneticAlgorithm:
         Crossover method
         '''
 
-        logger.debug('Starting crossover phase')
+        logger.info('Starting crossover phase')
         child = [None] * len(parent1)
         start_pos = random.randint(0, len(parent1) - 1)
         end_pos = random.randint(start_pos + 1, len(parent1))
@@ -134,10 +162,18 @@ class GeneticAlgorithm:
         Mutation method
         '''
 
+        logger.info('Starting mutation')
         for element in individual:
             if random.random() < MUTATION_RATE:
-                j = random.randint(0, len(individual) - 1)
-                element, individual[j] = individual[j], element
+                logger.info('Mutation!')
+                while True:
+                    j = random.randint(0, len(individual) - 1)
+                    element, individual[j] = individual[j], element
+                    if len(set(individual)) != len(self.cities):
+                        continue
+                    break
+
+        self.print_list(text='Mutation child: ', parents=individual)
 
     def evolve(self):
         '''
@@ -199,6 +235,9 @@ def main():
         City('A', 1, 1),
         City('B', 1, 2),
         City('C', 2, 3),
+        City('D', 10, -1),
+        City('E', 4, 5),
+        City('F', 3, 2),
     ]
 
     genetic_algorithm = GeneticAlgorithm(cities)
