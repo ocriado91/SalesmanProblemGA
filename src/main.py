@@ -78,6 +78,7 @@ class GeneticAlgorithm:
             return 1 / total_distance
         except ZeroDivisionError:
             self.print_list(text='ERROR!', parents=individual)
+            return None
 
     def selection(self):
         '''
@@ -101,7 +102,7 @@ class GeneticAlgorithm:
         for _ in range(2):
             while True:
                 selected = random.choices(population,
-                                        weights=weights)[0]
+                                          weights=weights)[0]
                 self.print_list(text='Selected: ', parents=selected)
                 if len(set(selected)) != len(self.cities):
                     self.print_list(text='Detected duplicated city: ',
@@ -112,7 +113,6 @@ class GeneticAlgorithm:
                 population.pop(index)
                 weights.pop(index)
                 break
-
 
         self.print_list(text='Parent1: ',
                         parents=sample[0])
@@ -133,7 +133,6 @@ class GeneticAlgorithm:
             logger.info(text)
         except AttributeError:
             logger.warning(parents)
-
 
     def crossover(self, parent1, parent2):
         '''
