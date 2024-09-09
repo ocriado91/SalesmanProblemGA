@@ -1,4 +1,7 @@
 # SalesmanProblemGA
+
+> :exclamation: __NOTE__: This repository has been moved to: https://github.com/ocriado91/understanding-algorithms
+
 Travelling Salesman Problem through Genetic Algorithms
 
 ## Introduction
